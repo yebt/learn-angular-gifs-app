@@ -16,7 +16,6 @@ export default class GifHistoryComponent {
 
   // Convert the observable in a signal
   query = toSignal(
-    inject(ActivatedRoute).params
-      .pipe(map((params) => params['query']))
+    inject(ActivatedRoute).params.pipe(map((params) => params['query']))
   );
 }
