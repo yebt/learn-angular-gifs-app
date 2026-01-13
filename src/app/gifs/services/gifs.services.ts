@@ -4,16 +4,14 @@ import { environment } from '@envs/environment.development';
 import { GiphyResponse } from '../interfaces/gphy.interfaces';
 import { Gif } from '../interfaces/gif.interface';
 import { GifMapper } from '../mapper/gif.mapper';
+import { map } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class GifService {
   private http = inject(HttpClient);
 
   trendingGifs = signal<Gif[]>([]);
-  trendingGifsLoading = signal(true)
-
-  searchingGifs = signal<Gif[]>([]);
-  searchGifsLoading = signal(true)
+  trendingGifsLoading = signal(true);
 
   constructor() {
     this.loadTrendingGifs();
@@ -30,22 +28,24 @@ export class GifService {
       .subscribe((resp) => {
         const gifs = GifMapper.mapGiphyItemsToGifArray(resp.data);
         this.trendingGifs.set(gifs);
-        this.trendingGifsLoading.set(false)
+        this.trendingGifsLoading.set(false);
       });
   }
 
   searchGIf(query: string) {
-    this.http.get<GiphyResponse>(`${environment.giphyUrl}/gifs/search`, {
-      params: {
-        api_key: environment.giphyAPIKey,
-        limit: 20,
-        q: query,
-      },
-    }).subscribe( (resp) => {
-        const gifs = GifMapper.mapGiphyItemsToGifArray(resp.data)
-        this.searchingGifs.set(gifs)
-        this.searchGifsLoading.set(false)
-        console.log({resp})
-      } )
+    return this.http
+      .get<GiphyResponse>(`${environment.giphyUrl}/gifs/search`, {
+        params: {
+          api_key: environment.giphyAPIKey,
+          limit: 20,
+          q: query,
+        },
+      })
+      .pipe(
+        map(({ data }) => data),
+        map((items) => GifMapper.mapGiphyItemsToGifArray(items)),
+
+        // TODO: add history
+      );
   }
 }
