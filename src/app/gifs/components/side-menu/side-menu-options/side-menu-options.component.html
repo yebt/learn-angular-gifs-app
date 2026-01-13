@@ -3,7 +3,7 @@
     <a
       [routerLink]="item.route"
       routerLinkActive="bg-blue-800"
-      class="w-full px-2 inline-flex space-x-2 items-center border-b border-slate-700 py-3  hover:bg-white/5 transition ease-linear duration-150"
+      class="w-full px-2 inline-flex space-x-2 items-center border-b border-slate-700 py-3 hover:bg-white/5 transition ease-linear duration-150"
     >
       <div>
         <!-- <i class="{{ item.icon }}"></i> -->
@@ -15,4 +15,21 @@
       </div>
     </a>
   }
+
+  <section>
+    @for (historyKey of gifService.searchHistoryKeys(); track historyKey) {
+      <a
+        [routerLink]="['/dashboard/history', historyKey]"
+        routerLinkActive="bg-blue-800"
+        class="w-full px-2 inline-flex space-x-2 items-center border-b border-slate-700 py-3 hover:bg-white/5 transition ease-linear duration-150"
+      >
+        <div>
+          <i class="fa-solid fa-clock-rotate-left"></i>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-lg font-bold leading-5 text-white">{{ historyKey }}</span>
+        </div>
+      </a>
+    }
+  </section>
 </div>
