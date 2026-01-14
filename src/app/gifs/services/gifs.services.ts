@@ -9,6 +9,8 @@ import { GifMapper } from '../mapper/gif.mapper';
 
 const GIF_KEY = '_x_gifs';
 
+const TRENDING_GIF_LIMIT = 20;
+
 // NOTE: SAVE IN THE LOCAL STORAGE
 const loadFromLocalStorage = () => {
   const gifsFromLocalStorage = localStorage.getItem(GIF_KEY) ?? '{}';
@@ -16,21 +18,21 @@ const loadFromLocalStorage = () => {
   return parsedGifs;
 };
 
-
 @Injectable({ providedIn: 'root' })
 export class GifService {
   private http = inject(HttpClient);
 
   trendingGifs = signal<Gif[]>([]);
-  trendingGifsLoading = signal(true);
+  trendingGifsLoading = signal(false);
+  private trendingGifsPage = signal<number>(0);
 
-  trendingGroupedGifs = computed<Gif[][]>(  () => {
-    const groups: Gif[][] = []
-    for (let i = 0; i < this.trendingGifs().length; i+=3){
-      groups.push(this.trendingGifs().slice(i, i+3))
+  trendingGroupedGifs = computed<Gif[][]>(() => {
+    const groups: Gif[][] = [];
+    for (let i = 0; i < this.trendingGifs().length; i += 3) {
+      groups.push(this.trendingGifs().slice(i, i + 3));
     }
     return groups;
-  } )
+  });
 
   // searchHistory = signal<Record<string, Gif[]>>({});
   searchHistory = signal<Record<string, Gif[]>>(loadFromLocalStorage());
@@ -47,17 +49,22 @@ export class GifService {
   });
 
   loadTrendingGifs() {
+    if (this.trendingGifsLoading()) return; // avoid multiple calls
+    this.trendingGifsLoading.set(true);
+
     this.http
       .get<GiphyResponse>(`${environment.giphyUrl}/gifs/trending`, {
         params: {
           api_key: environment.giphyAPIKey,
-          limit: 20,
+          limit: TRENDING_GIF_LIMIT,
+          offset: this.trendingGifsPage() * TRENDING_GIF_LIMIT,
         },
       })
-      .subscribe((resp) => {
-        const gifs = GifMapper.mapGiphyItemsToGifArray(resp.data);
-        this.trendingGifs.set(gifs);
-        this.trendingGifsLoading.set(false);
+      .pipe(map(({ data }) => GifMapper.mapGiphyItemsToGifArray(data)))
+      .subscribe((gifs: Gif[]) => {
+        this.trendingGifs.update((currntGifs) => [...currntGifs, ...gifs]);
+        this.trendingGifsLoading.set(false); // restore the callable
+        this.trendingGifsPage.update((currV) => currV + 1);
       });
   }
 
