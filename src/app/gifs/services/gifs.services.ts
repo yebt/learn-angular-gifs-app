@@ -9,11 +9,13 @@ import { GifMapper } from '../mapper/gif.mapper';
 
 const GIF_KEY = '_x_gifs';
 
+// NOTE: SAVE IN THE LOCAL STORAGE
 const loadFromLocalStorage = () => {
   const gifsFromLocalStorage = localStorage.getItem(GIF_KEY) ?? '{}';
   const parsedGifs = JSON.parse(gifsFromLocalStorage);
   return parsedGifs;
 };
+
 
 @Injectable({ providedIn: 'root' })
 export class GifService {
@@ -30,6 +32,7 @@ export class GifService {
     this.loadTrendingGifs();
   }
 
+  // NOTE: save in the local storage
   saveGifsToLocalStorage = effect(() => {
     const historyString = JSON.stringify(this.searchHistory());
     localStorage.setItem(GIF_KEY, historyString);
